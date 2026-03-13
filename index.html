@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Void Search</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ── Reset & Base ─────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #080808;
+      --surface:   #111111;
+      --border:    #222222;
+      --accent:    #e8d5a3;
+      --accent-dim:#7a6d50;
+      --text:      #e0e0e0;
+      --muted:     #666666;
+      --url-color: #7ab87a;
+      --mark-bg:   rgba(232, 213, 163, 0.18);
+      --mark-text: #e8d5a3;
+      --font-serif: 'Playfair Display', Georgia, serif;
+      --font-mono:  'IBM Plex Mono', 'Courier New', monospace;
+      --font-sans:  'IBM Plex Sans', system-ui, sans-serif;
+    }
+
+    html { font-size: 16px; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      font-weight: 300;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      /* subtle noise grain */
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    }
+
+    /* ── Home screen ──────────────────────────────────────────────────── */
+    #home {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 2rem;
+      animation: fadeIn 0.6s ease both;
+    }
+
+    .logo {
+      font-family: var(--font-serif);
+      font-size: clamp(3.5rem, 10vw, 7rem);
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      line-height: 1;
+      margin-bottom: 0.15em;
+      position: relative;
+    }
+
+    .logo::after {
+      content: '.';
+      color: var(--accent);
+    }
+
+    .tagline {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--muted);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-bottom: 3rem;
+    }
+
+    /* ── Search form ──────────────────────────────────────────────────── */
+    .search-wrap {
+      width: 100%;
+      max-width: 640px;
+      position: relative;
+    }
+
+    .search-input {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: var(--font-sans);
+      font-size: 1.1rem;
+      font-weight: 300;
+      padding: 1rem 3.5rem 1rem 1.4rem;
+      outline: none;
+      border-radius: 2px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      caret-color: var(--accent);
+    }
+
+    .search-input::placeholder { color: var(--muted); }
+
+    .search-input:focus {
+      border-color: var(--accent-dim);
+      box-shadow: 0 0 0 3px rgba(232, 213, 163, 0.06);
+    }
+
+    .search-btn {
+      position: absolute;
+      right: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 0.4rem;
+      display: flex;
+      align-items: center;
+      transition: color 0.2s;
+    }
+
+    .search-btn:hover { color: var(--accent); }
+
+    .search-btn svg { display: block; }
+
+    /* Autocomplete */
+    .suggestions {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0; right: 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      z-index: 100;
+      display: none;
+    }
+
+    .suggestions.open { display: block; }
+
+    .suggestion-item {
+      padding: 0.65rem 1.4rem;
+      font-size: 0.9rem;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+      transition: background 0.15s;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .suggestion-item:last-child { border-bottom: none; }
+    .suggestion-item:hover { background: #1a1a1a; }
+
+    .suggestion-item .sug-domain {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--muted);
+      margin-left: 0.5rem;
+    }
+
+    /* home stats line */
+    .home-stats {
+      margin-top: 1.25rem;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+    }
+
+    /* ── Results page ─────────────────────────────────────────────────── */
+    #results-page {
+      display: none;
+      min-height: 100vh;
+    }
+
+    /* Top bar */
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      padding: 1rem 2rem;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      background: rgba(8,8,8,0.95);
+      backdrop-filter: blur(8px);
+      z-index: 50;
+    }
+
+    .topbar-logo {
+      font-family: var(--font-serif);
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: var(--text);
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .topbar-logo::after { content: '.'; color: var(--accent); }
+
+    .topbar .search-wrap {
+      max-width: 560px;
+      flex: 1;
+    }
+
+    .topbar .search-input {
+      font-size: 0.95rem;
+      padding: 0.65rem 3rem 0.65rem 1rem;
+    }
+
+    /* Main content */
+    .results-main {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 2rem 2rem 4rem;
+    }
+
+    /* Meta bar */
+    .results-meta {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* Result cards */
+    .result-item {
+      margin-bottom: 2.25rem;
+      animation: slideUp 0.3s ease both;
+    }
+
+    .result-item:nth-child(2) { animation-delay: 0.04s; }
+    .result-item:nth-child(3) { animation-delay: 0.08s; }
+    .result-item:nth-child(4) { animation-delay: 0.12s; }
+    .result-item:nth-child(5) { animation-delay: 0.16s; }
+
+    .result-url-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.3rem;
+    }
+
+    .result-favicon {
+      width: 14px;
+      height: 14px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    .result-domain {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--url-color);
+      letter-spacing: 0.02em;
+    }
+
+    .result-breadcrumb {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--muted);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .result-title {
+      font-family: var(--font-serif);
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.3;
+      margin-bottom: 0.4rem;
+      cursor: pointer;
+      text-decoration: none;
+      display: block;
+      transition: color 0.15s;
+    }
+
+    .result-title:hover { color: var(--accent); }
+
+    .result-snippet {
+      font-size: 0.88rem;
+      line-height: 1.65;
+      color: #aaaaaa;
+      font-weight: 300;
+    }
+
+    .result-snippet mark {
+      background: var(--mark-bg);
+      color: var(--mark-text);
+      padding: 0 2px;
+      border-radius: 1px;
+      font-weight: 500;
+    }
+
+    .result-date {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--muted);
+      margin-top: 0.4rem;
+    }
+
+    /* divider */
+    .result-divider {
+      height: 1px;
+      background: var(--border);
+      margin-top: 2rem;
+      opacity: 0.5;
+    }
+
+    /* Pagination */
+    .pagination {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 3rem;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+    }
+
+    .page-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 0.45rem 0.9rem;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: all 0.15s;
+    }
+
+    .page-btn:hover:not(:disabled) {
+      border-color: var(--accent-dim);
+      color: var(--accent);
+    }
+
+    .page-btn.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(232,213,163,0.07);
+    }
+
+    .page-btn:disabled {
+      opacity: 0.3;
+      cursor: default;
+    }
+
+    /* ── States ───────────────────────────────────────────────────────── */
+    .state-loading,
+    .state-empty,
+    .state-error {
+      padding: 4rem 0;
+      text-align: center;
+    }
+
+    .state-loading .spinner {
+      width: 28px;
+      height: 28px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin: 0 auto 1rem;
+    }
+
+    .state-label {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .state-empty .big-text,
+    .state-error .big-text {
+      font-family: var(--font-serif);
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    /* ── Animations ───────────────────────────────────────────────────── */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* ── Responsive ───────────────────────────────────────────────────── */
+    @media (max-width: 640px) {
+      .topbar { padding: 0.75rem 1rem; gap: 0.75rem; }
+      .topbar-logo { font-size: 1.2rem; }
+      .results-main { padding: 1.25rem 1rem 3rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════ HOME ══════════ -->
+<div id="home">
+  <h1 class="logo">void</h1>
+  <p class="tagline">search the open web</p>
+
+  <div class="search-wrap">
+    <input
+      id="home-input"
+      class="search-input"
+      type="text"
+      placeholder="what are you looking for?"
+      autocomplete="off"
+      spellcheck="false"
+    />
+    <button class="search-btn" onclick="doSearch()" aria-label="Search">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+    </button>
+    <div class="suggestions" id="home-suggestions"></div>
+  </div>
+
+  <p class="home-stats" id="home-stats">loading index stats…</p>
+</div>
+
+<!-- ════════════════════════════════════════════════════ RESULTS ══════════ -->
+<div id="results-page">
+  <header class="topbar">
+    <div class="topbar-logo" onclick="goHome()">void</div>
+    <div class="search-wrap">
+      <input
+        id="results-input"
+        class="search-input"
+        type="text"
+        autocomplete="off"
+        spellcheck="false"
+      />
+      <button class="search-btn" onclick="doSearch()" aria-label="Search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+      </button>
+      <div class="suggestions" id="results-suggestions"></div>
+    </div>
+  </header>
+
+  <main class="results-main">
+    <div id="results-meta" class="results-meta"></div>
+    <div id="results-list"></div>
+    <div id="pagination" class="pagination"></div>
+  </main>
+</div>
+
+<script>
+// ── Config ────────────────────────────────────────────────────────────────
+const API = "http://localhost:8000";
+
+// ── State ─────────────────────────────────────────────────────────────────
+let currentPage = 1;
+let currentQuery = "";
+let suggestTimer = null;
+
+// ── Init ──────────────────────────────────────────────────────────────────
+window.addEventListener("DOMContentLoaded", () => {
+  loadStats();
+  bindInput("home-input", "home-suggestions");
+  bindInput("results-input", "results-suggestions");
+
+  // Enter key
+  ["home-input", "results-input"].forEach(id => {
+    document.getElementById(id).addEventListener("keydown", e => {
+      if (e.key === "Enter") doSearch();
+      if (e.key === "Escape") closeSuggestions();
+    });
+  });
+
+  // URL routing
+  const params = new URLSearchParams(location.search);
+  if (params.get("q")) {
+    const q = params.get("q");
+    const p = parseInt(params.get("p")) || 1;
+    showResultsPage(q, p);
+  }
+});
+
+// ── Stats ─────────────────────────────────────────────────────────────────
+async function loadStats() {
+  try {
+    const res = await fetch(`${API}/stats`);
+    const data = await res.json();
+    const n = (data.total_documents || 0).toLocaleString();
+    document.getElementById("home-stats").textContent =
+      `${n} pages indexed`;
+  } catch {
+    document.getElementById("home-stats").textContent = "index not connected";
+  }
+}
+
+// ── Search ────────────────────────────────────────────────────────────────
+function doSearch() {
+  const onHome = document.getElementById("home").style.display !== "none";
+  const inputId = onHome ? "home-input" : "results-input";
+  const q = document.getElementById(inputId).value.trim();
+  if (!q) return;
+  closeSuggestions();
+  showResultsPage(q, 1);
+  history.pushState({}, "", `?q=${encodeURIComponent(q)}&p=1`);
+}
+
+function goHome() {
+  document.getElementById("home").style.display = "";
+  document.getElementById("results-page").style.display = "none";
+  history.pushState({}, "", location.pathname);
+  document.getElementById("home-input").focus();
+}
+
+async function showResultsPage(query, page) {
+  currentQuery = query;
+  currentPage = page;
+
+  document.getElementById("home").style.display = "none";
+  document.getElementById("results-page").style.display = "block";
+  document.getElementById("results-input").value = query;
+
+  renderLoading();
+  await fetchResults(query, page);
+}
+
+async function fetchResults(query, page) {
+  try {
+    const res = await fetch(
+      `${API}/search?q=${encodeURIComponent(query)}&page=${page}&per_page=10`
+    );
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    renderResults(data);
+  } catch (err) {
+    renderError(err.message);
+  }
+}
+
+// ── Render ────────────────────────────────────────────────────────────────
+function renderLoading() {
+  document.getElementById("results-meta").textContent = "";
+  document.getElementById("results-list").innerHTML = `
+    <div class="state-loading">
+      <div class="spinner"></div>
+      <p class="state-label">searching the void…</p>
+    </div>`;
+  document.getElementById("pagination").innerHTML = "";
+}
+
+function renderResults(data) {
+  const { query, page, total, results, per_page } = data;
+  const totalPages = Math.ceil(total / per_page);
+
+  // Meta
+  const elapsed = "";
+  document.getElementById("results-meta").innerHTML =
+    `<span style="font-family:var(--font-mono);font-size:0.7rem;color:var(--muted);">` +
+    `about <strong style="color:var(--text)">${total.toLocaleString()}</strong> results</span>`;
+
+  // Results
+  if (!results.length) {
+    document.getElementById("results-list").innerHTML = `
+      <div class="state-empty">
+        <p class="big-text">nothing found.</p>
+        <p class="state-label">try different keywords</p>
+      </div>`;
+    document.getElementById("pagination").innerHTML = "";
+    return;
+  }
+
+  document.getElementById("results-list").innerHTML = results.map((r, i) => {
+    const formatted = r._formatted || {};
+    const title = formatted.title || r.title || r.url;
+    const snippet = formatted.description || r.description || (formatted.content || "").replace(/<[^>]+>/g, "");
+    const url = r.url || "#";
+    const domain = r.domain || new URL(url).hostname;
+    const favicon = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=32`;
+
+    // breadcrumb
+    let breadcrumb = "";
+    try {
+      const parsed = new URL(url);
+      breadcrumb = parsed.pathname.replace(/\/$/, "") || "";
+    } catch {}
+
+    const crawledAt = r.crawled_at
+      ? new Date(r.crawled_at).toLocaleDateString("en-US", { year:"numeric", month:"short", day:"numeric" })
+      : "";
+
+    return `
+      <div class="result-item">
+        <div class="result-url-row">
+          <img class="result-favicon" src="${favicon}" alt="" onerror="this.style.display='none'" />
+          <span class="result-domain">${escHtml(domain)}</span>
+          <span class="result-breadcrumb">${escHtml(breadcrumb)}</span>
+        </div>
+        <a class="result-title" href="${escHtml(url)}" target="_blank" rel="noopener">${title}</a>
+        ${snippet ? `<p class="result-snippet">${snippet}</p>` : ""}
+        ${crawledAt ? `<p class="result-date">indexed ${crawledAt}</p>` : ""}
+        ${i < results.length - 1 ? '<div class="result-divider"></div>' : ""}
+      </div>`;
+  }).join("");
+
+  // Pagination
+  renderPagination(page, totalPages);
+}
+
+function renderPagination(current, total) {
+  if (total <= 1) { document.getElementById("pagination").innerHTML = ""; return; }
+
+  const pages = paginationRange(current, total);
+  const btns = pages.map(p => {
+    if (p === "…") return `<span style="color:var(--muted);padding:0 0.3rem">…</span>`;
+    return `<button class="page-btn ${p === current ? "active" : ""}"
+      onclick="goToPage(${p})">${p}</button>`;
+  });
+
+  const prev = `<button class="page-btn" onclick="goToPage(${current-1})" ${current===1?"disabled":""}>←</button>`;
+  const next = `<button class="page-btn" onclick="goToPage(${current+1})" ${current===total?"disabled":""}>→</button>`;
+
+  document.getElementById("pagination").innerHTML = prev + btns.join("") + next;
+}
+
+function paginationRange(current, total) {
+  const delta = 2;
+  const range = [];
+  for (let i = Math.max(1, current - delta); i <= Math.min(total, current + delta); i++) {
+    range.push(i);
+  }
+  if (range[0] > 1) { if (range[0] > 2) range.unshift("…"); range.unshift(1); }
+  if (range[range.length-1] < total) {
+    if (range[range.length-1] < total-1) range.push("…");
+    range.push(total);
+  }
+  return range;
+}
+
+function goToPage(p) {
+  history.pushState({}, "", `?q=${encodeURIComponent(currentQuery)}&p=${p}`);
+  showResultsPage(currentQuery, p);
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function renderError(msg) {
+  document.getElementById("results-list").innerHTML = `
+    <div class="state-error">
+      <p class="big-text">error.</p>
+      <p class="state-label">could not reach search server — is it running?</p>
+      <p style="font-family:var(--font-mono);font-size:0.7rem;color:var(--muted);margin-top:1rem">${escHtml(msg)}</p>
+    </div>`;
+  document.getElementById("pagination").innerHTML = "";
+}
+
+// ── Autocomplete ──────────────────────────────────────────────────────────
+function bindInput(inputId, suggestionsId) {
+  const input = document.getElementById(inputId);
+  const box = document.getElementById(suggestionsId);
+
+  input.addEventListener("input", () => {
+    clearTimeout(suggestTimer);
+    const q = input.value.trim();
+    if (q.length < 2) { closeSuggestions(); return; }
+    suggestTimer = setTimeout(() => fetchSuggestions(q, box, input), 250);
+  });
+
+  document.addEventListener("click", e => {
+    if (!box.contains(e.target) && e.target !== input) closeSuggestions();
+  });
+}
+
+async function fetchSuggestions(q, box, input) {
+  try {
+    const res = await fetch(`${API}/suggest?q=${encodeURIComponent(q)}`);
+    const data = await res.json();
+    const hits = data.suggestions || [];
+    if (!hits.length) { closeSuggestions(); return; }
+
+    box.innerHTML = hits.map(h =>
+      `<div class="suggestion-item" onclick="pickSuggestion('${escAttr(h.title || h.url)}')">
+        ${escHtml(h.title || h.url)}
+        <span class="sug-domain">${escHtml(h.domain || "")}</span>
+      </div>`
+    ).join("");
+    box.classList.add("open");
+  } catch { closeSuggestions(); }
+}
+
+function pickSuggestion(text) {
+  closeSuggestions();
+  const onHome = document.getElementById("home").style.display !== "none";
+  const inputId = onHome ? "home-input" : "results-input";
+  document.getElementById(inputId).value = text;
+  doSearch();
+}
+
+function closeSuggestions() {
+  document.querySelectorAll(".suggestions").forEach(el => el.classList.remove("open"));
+}
+
+// ── Utils ─────────────────────────────────────────────────────────────────
+function escHtml(s) {
+  return String(s)
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;");
+}
+function escAttr(s) {
+  return String(s).replace(/'/g, "\\'");
+}
+</script>
+</body>
+</html>
