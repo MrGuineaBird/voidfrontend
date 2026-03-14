@@ -798,24 +798,27 @@ function renderImageGrid(reset = false) {
   const slice = imageResults.slice(0, imageOffset + imagePageSize);
   const hasMore = imageResults.length > slice.length;
 
-  document.getElementById("results-list").innerHTML =
-    '<div class="images-grid">' +
-    slice.map((r, i) => {
-      const favicon = 'https://www.google.com/s2/favicons?domain=' + encodeURIComponent(r.domain) + '&sz=32';
-      const delay = Math.min(i,16)*0.025;
-      return '<a class="img-card" href="' + escHtml(r.url) + '" target="_blank" rel="noopener" style="animation-delay:' + delay + 's">' +
-        '<img src="' + escHtml(r.image_url) + '" alt="' + escHtml(r.title) + '" loading="lazy" onerror="this.closest('.img-card').remove()" />' +
-        '<div class="img-overlay">' +
-          '<div class="img-overlay-title">' + escHtml(r.title) + '</div>' +
-          '<div class="img-overlay-domain">' +
-            '<img class="img-overlay-favicon" src="' + favicon + '" alt="" onerror="this.style.display='none'" />' +
-            escHtml(r.domain) +
-          '</div>' +
-        '</div>' +
-      '</a>';
-    }).join('') +
-    '</div>' +
-    (hasMore ? '<div class="images-load-more"><button class="load-more-btn" onclick="loadMoreImages()">load more</button></div>' : '');
+  document.getElementById("results-list").innerHTML = [
+      '<div class="images-grid">',
+      ...slice.map((r, i) => {
+        const favicon = "https://www.google.com/s2/favicons?domain=" + encodeURIComponent(r.domain) + "&sz=32";
+        const delay = (Math.min(i,16)*0.025) + "s";
+        return [
+          '<a class="img-card" href="' + escHtml(r.url) + '" target="_blank" rel="noopener" style="animation-delay:' + delay + '">',
+            '<img src="' + escHtml(r.image_url) + '" alt="' + escHtml(r.title) + '" loading="lazy" onerror="this.closest(&quot;.img-card&quot;).remove()" />',
+            '<div class="img-overlay">',
+              '<div class="img-overlay-title">' + escHtml(r.title) + '</div>',
+              '<div class="img-overlay-domain">',
+                '<img class="img-overlay-favicon" src="' + escHtml(favicon) + '" alt="" onerror="this.style.display=&quot;none&quot;" />',
+                escHtml(r.domain),
+              '</div>',
+            '</div>',
+          '</a>'
+        ].join('');
+      }),
+      '</div>',
+      hasMore ? '<div class="images-load-more"><button class="load-more-btn" onclick="loadMoreImages()">load more</button></div>' : ''
+    ].join('');
 
   document.getElementById("pagination").innerHTML = "";
 }
