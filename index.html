@@ -37,7 +37,6 @@
       font-weight: 300;
       min-height: 100vh;
       -webkit-font-smoothing: antialiased;
-      /* subtle noise grain */
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
     }
 
@@ -122,7 +121,6 @@
     }
 
     .search-btn:hover { color: var(--accent); }
-
     .search-btn svg { display: block; }
 
     /* Autocomplete */
@@ -161,7 +159,6 @@
       margin-left: 0.5rem;
     }
 
-    /* home stats line */
     .home-stats {
       margin-top: 1.25rem;
       font-family: var(--font-mono);
@@ -176,7 +173,6 @@
       min-height: 100vh;
     }
 
-    /* Top bar */
     .topbar {
       display: flex;
       align-items: center;
@@ -202,27 +198,20 @@
 
     .topbar-logo::after { content: '.'; color: var(--accent); }
 
-    .topbar .search-wrap {
-      max-width: 560px;
-      flex: 1;
-    }
+    .topbar .search-wrap { max-width: 560px; flex: 1; }
 
     .topbar .search-input {
       font-size: 0.95rem;
       padding: 0.65rem 3rem 0.65rem 1rem;
     }
 
-    /* Main content */
     .results-main {
       max-width: 760px;
       margin: 0 auto;
       padding: 2rem 2rem 4rem;
     }
 
-    /* Images mode: wider container */
-    .results-main.images-mode {
-      max-width: 1100px;
-    }
+    .results-main.images-mode { max-width: 1100px; }
 
     /* ── Tabs ─────────────────────────────────────────────────────────── */
     .tabs {
@@ -271,6 +260,7 @@
       margin-bottom: 2rem;
       padding-bottom: 1rem;
       border-bottom: 1px solid var(--border);
+    }
 
     /* ── Image grid ───────────────────────────────────────────────────── */
     .images-grid {
@@ -349,7 +339,6 @@
       border-color: var(--accent-dim);
       color: var(--accent);
     }
-    }
 
     /* Result cards */
     .result-item {
@@ -357,7 +346,6 @@
       animation: slideUp 0.3s ease both;
     }
 
-    /* Card layout when image is present */
     .result-card {
       display: flex;
       gap: 1rem;
@@ -456,7 +444,6 @@
       margin-top: 0.4rem;
     }
 
-    /* divider */
     .result-divider {
       height: 1px;
       background: var(--border);
@@ -803,7 +790,6 @@
     <div id="reader-bar">
       <img class="reader-favicon" id="reader-favicon" src="" alt="" onerror="this.style.display='none'" />
       <span id="reader-url"></span>
-      <!-- Open externally -->
       <a id="reader-ext-link" href="#" target="_blank" rel="noopener" class="reader-icon-btn" title="Open in browser">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
@@ -811,7 +797,6 @@
           <line x1="10" y1="14" x2="21" y2="3"/>
         </svg>
       </a>
-      <!-- Close -->
       <button class="reader-icon-btn" onclick="closeReader()" title="Close">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
@@ -820,13 +805,10 @@
     </div>
 
     <div id="reader-iframe-wrap">
-      <!-- Loading spinner -->
       <div id="reader-loading">
         <div class="spinner"></div>
       </div>
-      <!-- The iframe -->
       <iframe id="reader-iframe" referrerpolicy="no-referrer"></iframe>
-      <!-- Blocked fallback -->
       <div id="reader-blocked">
         <p class="blocked-title">blocked.</p>
         <p class="blocked-sub">this site prevents being embedded — a common security policy. you can still open it in your browser.</p>
@@ -838,17 +820,21 @@
 
 <script>
 // ── Config ────────────────────────────────────────────────────────────────
-const API = "https://voidapi.kyklos.online";
+const API     = "https://voidapi.kyklos.online";
+const API_KEY = "efd16837f29095ee5ed2a1d26cf975919b1ebed64e79c90e4f674c7766628d45"; 
+
+// ── Auth helper ───────────────────────────────────────────────────────────
+const authHeaders = { "X-Api-Key": API_KEY };
 
 // ── State ─────────────────────────────────────────────────────────────────
-let currentPage  = 1;
-let currentQuery = "";
-let currentTab   = "all";       // "all" | "images"
-let allResults   = [];          // cache all results for image tab
-let imageResults = [];          // results that have image_url
+let currentPage   = 1;
+let currentQuery  = "";
+let currentTab    = "all";
+let allResults    = [];
+let imageResults  = [];
 let imagePageSize = 30;
-let imageOffset  = 0;
-let suggestTimer = null;
+let imageOffset   = 0;
+let suggestTimer  = null;
 
 // ── Init ──────────────────────────────────────────────────────────────────
 window.addEventListener("DOMContentLoaded", () => {
@@ -856,7 +842,6 @@ window.addEventListener("DOMContentLoaded", () => {
   bindInput("home-input", "home-suggestions");
   bindInput("results-input", "results-suggestions");
 
-  // Enter key
   ["home-input", "results-input"].forEach(id => {
     document.getElementById(id).addEventListener("keydown", e => {
       if (e.key === "Enter") doSearch();
@@ -864,7 +849,6 @@ window.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // URL routing
   const params = new URLSearchParams(location.search);
   if (params.get("q")) {
     const q = params.get("q");
@@ -877,11 +861,11 @@ window.addEventListener("DOMContentLoaded", () => {
 // ── Stats ─────────────────────────────────────────────────────────────────
 async function loadStats() {
   try {
+    // /stats is unprotected — no key needed
     const res = await fetch(`${API}/stats`);
     const data = await res.json();
     const n = (data.total_documents || 0).toLocaleString();
-    document.getElementById("home-stats").textContent =
-      `${n} pages indexed`;
+    document.getElementById("home-stats").textContent = `${n} pages indexed`;
   } catch {
     document.getElementById("home-stats").textContent = "index not connected";
   }
@@ -895,11 +879,8 @@ function switchTab(tab) {
   const main = document.getElementById("results-main");
   main.classList.toggle("images-mode", tab === "images");
   history.replaceState({}, "", `?q=${encodeURIComponent(currentQuery)}&p=${currentPage}&t=${tab}`);
-  if (tab === "images") {
-    renderImageGrid(true);
-  } else {
-    renderResultsList();
-  }
+  if (tab === "images") renderImageGrid(true);
+  else renderResultsList();
 }
 
 // ── Search ────────────────────────────────────────────────────────────────
@@ -930,11 +911,9 @@ async function showResultsPage(query, page, tab = "all") {
   document.getElementById("results-page").style.display = "block";
   document.getElementById("results-input").value = query;
 
-  // Set active tab
   document.getElementById("tab-all").classList.toggle("active", tab === "all");
   document.getElementById("tab-images").classList.toggle("active", tab === "images");
-  const main = document.getElementById("results-main");
-  main.classList.toggle("images-mode", tab === "images");
+  document.getElementById("results-main").classList.toggle("images-mode", tab === "images");
 
   renderLoading();
   await fetchResults(query, page);
@@ -944,25 +923,26 @@ async function showResultsPage(query, page, tab = "all") {
 }
 
 async function fetchResults(query, page) {
-  // For images tab, fetch a larger batch so we have more images to show
   const perPage = currentTab === "images" ? 50 : 10;
   try {
     const res = await fetch(
-      `${API}/search?q=${encodeURIComponent(query)}&page=${page}&per_page=${perPage}`
+      `${API}/search?q=${encodeURIComponent(query)}&page=${page}&per_page=${perPage}`,
+      { headers: authHeaders }
     );
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     allResults   = data.results || [];
     imageResults = allResults.filter(r => r.image_url);
     imageOffset  = 0;
-    // Store total for pagination
-    fetchResults._total    = data.total;
-    fetchResults._perPage  = data.per_page;
-    fetchResults._data     = data;
+    fetchResults._total   = data.total;
+    fetchResults._perPage = data.per_page;
+    fetchResults._data    = data;
+    fetchResults._error   = null;
   } catch (err) {
     allResults = [];
     imageResults = [];
     fetchResults._error = err.message;
+    fetchResults._data  = null;
   }
 }
 
@@ -1021,7 +1001,6 @@ function loadMoreImages() {
   renderImageGrid(false);
 }
 
-
 function renderLoading() {
   document.getElementById("results-meta").textContent = "";
   document.getElementById("results-list").innerHTML = `
@@ -1036,13 +1015,10 @@ function renderResults(data) {
   const { query, page, total, results, per_page } = data;
   const totalPages = Math.ceil(total / per_page);
 
-  // Meta
-  const elapsed = "";
   document.getElementById("results-meta").innerHTML =
     `<span style="font-family:var(--font-mono);font-size:0.7rem;color:var(--muted);">` +
     `about <strong style="color:var(--text)">${total.toLocaleString()}</strong> results</span>`;
 
-  // Results
   if (!results.length) {
     document.getElementById("results-list").innerHTML = `
       <div class="state-empty">
@@ -1054,21 +1030,20 @@ function renderResults(data) {
   }
 
   document.getElementById("results-list").innerHTML = results.map((r, i) => {
-    const formatted = r._formatted || {};
-    const title   = formatted.title || r.title || r.url;
-    const snippet = formatted.description || r.description || "";
-    const url     = r.url || "#";
-    const domain  = r.domain || new URL(url).hostname;
-    const favicon = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=32`;
-    const imgUrl  = r.image_url || "";
+    const formatted  = r._formatted || {};
+    const title      = formatted.title || r.title || r.url;
+    const snippet    = formatted.description || r.description || "";
+    const url        = r.url || "#";
+    const domain     = r.domain || new URL(url).hostname;
+    const favicon    = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=32`;
+    const imgUrl     = r.image_url || "";
+    const crawledAt  = r.crawled_at || "";
 
     let breadcrumb = "";
     try {
       const parsed = new URL(url);
       breadcrumb = parsed.pathname.replace(/\/$/, "") || "";
     } catch {}
-
-    const crawledAt = r.crawled_at || "";
 
     const thumbHtml = imgUrl
       ? `<img class="result-thumb" src="${escHtml(imgUrl)}" alt="" loading="lazy"
@@ -1096,7 +1071,6 @@ function renderResults(data) {
       </div>`;
   }).join("");
 
-  // Pagination
   renderPagination(page, totalPages);
 }
 
@@ -1106,8 +1080,7 @@ function renderPagination(current, total) {
   const pages = paginationRange(current, total);
   const btns = pages.map(p => {
     if (p === "…") return `<span style="color:var(--muted);padding:0 0.3rem">…</span>`;
-    return `<button class="page-btn ${p === current ? "active" : ""}"
-      onclick="goToPage(${p})">${p}</button>`;
+    return `<button class="page-btn ${p === current ? "active" : ""}" onclick="goToPage(${p})">${p}</button>`;
   });
 
   const prev = `<button class="page-btn" onclick="goToPage(${current-1})" ${current===1?"disabled":""}>←</button>`;
@@ -1149,7 +1122,7 @@ function renderError(msg) {
 // ── Autocomplete ──────────────────────────────────────────────────────────
 function bindInput(inputId, suggestionsId) {
   const input = document.getElementById(inputId);
-  const box = document.getElementById(suggestionsId);
+  const box   = document.getElementById(suggestionsId);
 
   input.addEventListener("input", () => {
     clearTimeout(suggestTimer);
@@ -1165,7 +1138,10 @@ function bindInput(inputId, suggestionsId) {
 
 async function fetchSuggestions(q, box, input) {
   try {
-    const res = await fetch(`${API}/suggest?q=${encodeURIComponent(q)}`);
+    const res = await fetch(
+      `${API}/suggest?q=${encodeURIComponent(q)}`,
+      { headers: authHeaders }
+    );
     const data = await res.json();
     const hits = data.suggestions || [];
     if (!hits.length) { closeSuggestions(); return; }
@@ -1205,7 +1181,6 @@ function openReader(url, domain, title) {
   const loading  = document.getElementById("reader-loading");
   const blocked  = document.getElementById("reader-blocked");
 
-  // Reset state
   iframe.style.display = "block";
   blocked.style.display = "none";
   loading.classList.remove("hidden");
@@ -1219,13 +1194,21 @@ function openReader(url, domain, title) {
   overlay.classList.add("open");
   document.body.style.overflow = "hidden";
 
-  // Use server-side proxy — bypasses X-Frame-Options / CSP entirely
+  // Fetch via proxy with API key, then load into iframe as a blob URL
   const proxyUrl = `${API}/fetch?url=${encodeURIComponent(url)}`;
 
-  iframe.onload = () => loading.classList.add("hidden");
-  iframe.onerror = () => showBlocked();
-
-  iframe.src = proxyUrl;
+  fetch(proxyUrl, { headers: authHeaders })
+    .then(r => {
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return r.text();
+    })
+    .then(html => {
+      const blob = new Blob([html], { type: "text/html" });
+      const blobUrl = URL.createObjectURL(blob);
+      iframe.onload = () => loading.classList.add("hidden");
+      iframe.src = blobUrl;
+    })
+    .catch(() => showBlocked());
 }
 
 function showBlocked() {
@@ -1242,11 +1225,9 @@ function closeReader() {
   const iframe  = document.getElementById("reader-iframe");
   overlay.classList.remove("open");
   document.body.style.overflow = "";
-  // Clear iframe after animation
   setTimeout(() => { iframe.src = "about:blank"; }, 300);
 }
 
-// Close on Escape key
 document.addEventListener("keydown", e => {
   if (e.key === "Escape" && document.getElementById("reader-overlay").classList.contains("open")) {
     closeReader();
