@@ -272,58 +272,46 @@
       padding-bottom: 1rem;
       border-bottom: 1px solid var(--border);
 
-    /* ── Image grid — masonry ─────────────────────────────────────────── */
+    /* ── Image grid ───────────────────────────────────────────────────── */
     .images-grid {
-      columns: 4;
-      column-gap: 0.5rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 0.75rem;
     }
 
-    @media (max-width: 900px) { .images-grid { columns: 3; } }
-    @media (max-width: 600px) { .images-grid { columns: 2; } }
-
     .img-card {
-      break-inside: avoid;
-      display: block;
-      margin-bottom: 0.5rem;
       position: relative;
-      border-radius: 6px;
+      border-radius: 4px;
       overflow: hidden;
       background: var(--surface);
+      border: 1px solid var(--border);
       cursor: pointer;
-      text-decoration: none;
       animation: slideUp 0.3s ease both;
+      text-decoration: none;
+      display: block;
     }
 
     .img-card:hover .img-overlay { opacity: 1; }
-    .img-card:hover img { transform: scale(1.02); }
 
     .img-card img {
       width: 100%;
-      height: auto;        /* natural aspect ratio — no cropping */
+      height: 150px;
+      object-fit: cover;
       display: block;
       background: var(--surface);
-      transition: transform 0.25s ease;
     }
 
     .img-overlay {
       position: absolute;
       bottom: 0; left: 0; right: 0;
-      background: linear-gradient(transparent, rgba(0,0,0,0.82));
-      padding: 2rem 0.7rem 0.7rem;
+      background: linear-gradient(transparent, rgba(0,0,0,0.85));
+      padding: 1.5rem 0.6rem 0.6rem;
       opacity: 0;
       transition: opacity 0.2s;
     }
 
-    .img-overlay-favicon {
-      width: 14px;
-      height: 14px;
-      border-radius: 2px;
-      vertical-align: middle;
-      margin-right: 4px;
-    }
-
     .img-overlay-title {
-      font-size: 0.78rem;
+      font-size: 0.75rem;
       font-weight: 500;
       color: #fff;
       line-height: 1.3;
@@ -331,20 +319,17 @@
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
-      margin-bottom: 0.25rem;
     }
 
     .img-overlay-domain {
       font-family: var(--font-mono);
       font-size: 0.65rem;
-      color: rgba(255,255,255,0.65);
-      display: flex;
-      align-items: center;
-      gap: 3px;
+      color: rgba(255,255,255,0.6);
+      margin-top: 0.2rem;
     }
 
     .images-load-more {
-      margin-top: 1.5rem;
+      margin-top: 2rem;
       text-align: center;
     }
 
@@ -571,6 +556,177 @@
       .topbar-logo { font-size: 1.2rem; }
       .results-main { padding: 1.25rem 1rem 3rem; }
     }
+
+    /* ── Reader Panel ─────────────────────────────────────────────────── */
+    #reader-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      display: flex;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.25s ease;
+    }
+
+    #reader-overlay.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    #reader-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      backdrop-filter: blur(2px);
+    }
+
+    #reader-panel {
+      position: relative;
+      margin-left: auto;
+      width: min(820px, 100vw);
+      height: 100%;
+      background: var(--bg);
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      transform: translateX(100%);
+      transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    #reader-overlay.open #reader-panel {
+      transform: translateX(0);
+    }
+
+    #reader-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.65rem 1rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+
+    #reader-bar .reader-favicon {
+      width: 14px;
+      height: 14px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    #reader-url {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--url-color);
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .reader-icon-btn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 0.3rem;
+      border-radius: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.15s, background 0.15s;
+      flex-shrink: 0;
+    }
+
+    .reader-icon-btn:hover {
+      color: var(--accent);
+      background: rgba(232,213,163,0.07);
+    }
+
+    #reader-iframe-wrap {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #reader-iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: #fff;
+    }
+
+    #reader-blocked {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      gap: 1rem;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    #reader-blocked .blocked-title {
+      font-family: var(--font-serif);
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    #reader-blocked .blocked-sub {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+      max-width: 320px;
+      line-height: 1.7;
+    }
+
+    #reader-blocked .open-ext-btn {
+      margin-top: 0.5rem;
+      background: none;
+      border: 1px solid var(--accent-dim);
+      color: var(--accent);
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      padding: 0.6rem 1.6rem;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: all 0.15s;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    #reader-blocked .open-ext-btn:hover {
+      background: rgba(232,213,163,0.07);
+    }
+
+    #reader-loading {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg);
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+
+    #reader-loading.hidden { opacity: 0; }
+
+    #reader-loading .spinner {
+      width: 24px;
+      height: 24px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @media (max-width: 640px) {
+      #reader-panel { width: 100vw; border-left: none; }
+    }
   </style>
 </head>
 <body>
@@ -638,6 +794,46 @@
     <div id="results-list"></div>
     <div id="pagination" class="pagination"></div>
   </main>
+</div>
+
+<!-- ══════════════════════════════════════════════ READER PANEL ══════════ -->
+<div id="reader-overlay">
+  <div id="reader-backdrop" onclick="closeReader()"></div>
+  <div id="reader-panel">
+    <div id="reader-bar">
+      <img class="reader-favicon" id="reader-favicon" src="" alt="" onerror="this.style.display='none'" />
+      <span id="reader-url"></span>
+      <!-- Open externally -->
+      <a id="reader-ext-link" href="#" target="_blank" rel="noopener" class="reader-icon-btn" title="Open in browser">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+          <polyline points="15 3 21 3 21 9"/>
+          <line x1="10" y1="14" x2="21" y2="3"/>
+        </svg>
+      </a>
+      <!-- Close -->
+      <button class="reader-icon-btn" onclick="closeReader()" title="Close">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <div id="reader-iframe-wrap">
+      <!-- Loading spinner -->
+      <div id="reader-loading">
+        <div class="spinner"></div>
+      </div>
+      <!-- The iframe -->
+      <iframe id="reader-iframe" referrerpolicy="no-referrer"></iframe>
+      <!-- Blocked fallback -->
+      <div id="reader-blocked">
+        <p class="blocked-title">blocked.</p>
+        <p class="blocked-sub">this site prevents being embedded — a common security policy. you can still open it in your browser.</p>
+        <a id="reader-blocked-link" href="#" target="_blank" rel="noopener" class="open-ext-btn">open in browser →</a>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -798,27 +994,24 @@ function renderImageGrid(reset = false) {
   const slice = imageResults.slice(0, imageOffset + imagePageSize);
   const hasMore = imageResults.length > slice.length;
 
-  document.getElementById("results-list").innerHTML = [
-      '<div class="images-grid">',
-      ...slice.map((r, i) => {
-        const favicon = "https://www.google.com/s2/favicons?domain=" + encodeURIComponent(r.domain) + "&sz=32";
-        const delay = (Math.min(i,16)*0.025) + "s";
-        return [
-          '<a class="img-card" href="' + escHtml(r.url) + '" target="_blank" rel="noopener" style="animation-delay:' + delay + '">',
-            '<img src="' + escHtml(r.image_url) + '" alt="' + escHtml(r.title) + '" loading="lazy" onerror="this.closest(&quot;.img-card&quot;).remove()" />',
-            '<div class="img-overlay">',
-              '<div class="img-overlay-title">' + escHtml(r.title) + '</div>',
-              '<div class="img-overlay-domain">',
-                '<img class="img-overlay-favicon" src="' + escHtml(favicon) + '" alt="" onerror="this.style.display=&quot;none&quot;" />',
-                escHtml(r.domain),
-              '</div>',
-            '</div>',
-          '</a>'
-        ].join('');
-      }),
-      '</div>',
-      hasMore ? '<div class="images-load-more"><button class="load-more-btn" onclick="loadMoreImages()">load more</button></div>' : ''
-    ].join('');
+  document.getElementById("results-list").innerHTML = `
+    <div class="images-grid">
+      ${slice.map((r, i) => `
+        <a class="img-card" href="${escHtml(r.url)}"
+           onclick="event.preventDefault(); openReader(${JSON.stringify(r.url)}, ${JSON.stringify(r.domain)}, ${JSON.stringify(r.title)})"
+           style="animation-delay:${Math.min(i,12)*0.03}s">
+          <img src="${escHtml(r.image_url)}" alt="${escHtml(r.title)}" loading="lazy"
+               onerror="this.closest('.img-card').style.display='none'" />
+          <div class="img-overlay">
+            <div class="img-overlay-title">${escHtml(r.title)}</div>
+            <div class="img-overlay-domain">${escHtml(r.domain)}</div>
+          </div>
+        </a>`).join("")}
+    </div>
+    ${hasMore ? `
+      <div class="images-load-more">
+        <button class="load-more-btn" onclick="loadMoreImages()">load more</button>
+      </div>` : ""}`;
 
   document.getElementById("pagination").innerHTML = "";
 }
@@ -892,7 +1085,9 @@ function renderResults(data) {
               <span class="result-domain">${escHtml(domain)}</span>
               <span class="result-breadcrumb">${escHtml(breadcrumb)}</span>
             </div>
-            <a class="result-title" href="${escHtml(url)}" target="_blank" rel="noopener">${title}</a>
+            <a class="result-title" href="${escHtml(url)}"
+               onclick="event.preventDefault(); openReader(${JSON.stringify(url)}, ${JSON.stringify(domain)}, ${JSON.stringify(title)})"
+            >${title}</a>
             ${snippet ? `<p class="result-snippet">${snippet}</p>` : ""}
             ${crawledAt ? `<p class="result-date">indexed ${escHtml(crawledAt)}</p>` : ""}
           </div>
@@ -997,7 +1192,67 @@ function closeSuggestions() {
   document.querySelectorAll(".suggestions").forEach(el => el.classList.remove("open"));
 }
 
-// ── Utils ─────────────────────────────────────────────────────────────────
+// ── Reader Panel ──────────────────────────────────────────────────────────
+let readerCurrentUrl = "";
+
+function openReader(url, domain, title) {
+  readerCurrentUrl = url;
+  const overlay  = document.getElementById("reader-overlay");
+  const iframe   = document.getElementById("reader-iframe");
+  const urlLabel = document.getElementById("reader-url");
+  const favicon  = document.getElementById("reader-favicon");
+  const extLink  = document.getElementById("reader-ext-link");
+  const loading  = document.getElementById("reader-loading");
+  const blocked  = document.getElementById("reader-blocked");
+
+  // Reset state
+  iframe.style.display = "block";
+  blocked.style.display = "none";
+  loading.classList.remove("hidden");
+
+  urlLabel.textContent = url;
+  favicon.src = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=32`;
+  favicon.style.display = "";
+  extLink.href = url;
+  document.getElementById("reader-blocked-link").href = url;
+
+  overlay.classList.add("open");
+  document.body.style.overflow = "hidden";
+
+  // Use server-side proxy — bypasses X-Frame-Options / CSP entirely
+  const proxyUrl = `${API}/fetch?url=${encodeURIComponent(url)}`;
+
+  iframe.onload = () => loading.classList.add("hidden");
+  iframe.onerror = () => showBlocked();
+
+  iframe.src = proxyUrl;
+}
+
+function showBlocked() {
+  const iframe  = document.getElementById("reader-iframe");
+  const loading = document.getElementById("reader-loading");
+  const blocked = document.getElementById("reader-blocked");
+  iframe.style.display = "none";
+  loading.classList.add("hidden");
+  blocked.style.display = "flex";
+}
+
+function closeReader() {
+  const overlay = document.getElementById("reader-overlay");
+  const iframe  = document.getElementById("reader-iframe");
+  overlay.classList.remove("open");
+  document.body.style.overflow = "";
+  // Clear iframe after animation
+  setTimeout(() => { iframe.src = "about:blank"; }, 300);
+}
+
+// Close on Escape key
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape" && document.getElementById("reader-overlay").classList.contains("open")) {
+    closeReader();
+  }
+});
+
 function escHtml(s) {
   return String(s)
     .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
