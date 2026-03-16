@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>About — Void Search</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #080808;
+      --surface:   #111111;
+      --border:    #222222;
+      --accent:    #e8d5a3;
+      --accent-dim:#7a6d50;
+      --text:      #e0e0e0;
+      --muted:     #666666;
+      --url-color: #7ab87a;
+      --font-serif: 'Playfair Display', Georgia, serif;
+      --font-mono:  'IBM Plex Mono', 'Courier New', monospace;
+      --font-sans:  'IBM Plex Sans', system-ui, sans-serif;
+    }
+
+    html { font-size: 16px; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      font-weight: 300;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    }
+
+    /* ── Nav ── */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.5rem 3rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-logo {
+      font-family: var(--font-serif);
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: var(--text);
+      text-decoration: none;
+    }
+
+    .nav-logo::after {
+      content: '.';
+      color: var(--accent);
+    }
+
+    .nav-link {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-decoration: none;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      transition: color 0.15s;
+    }
+
+    .nav-link:hover { color: var(--accent); }
+
+    /* ── Hero ── */
+    .hero {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 6rem 3rem 4rem;
+      animation: fadeIn 0.7s ease both;
+    }
+
+    .hero-label {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--accent);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .hero-label::before {
+      content: '';
+      display: block;
+      width: 2rem;
+      height: 1px;
+      background: var(--accent);
+    }
+
+    .hero-title {
+      font-family: var(--font-serif);
+      font-size: clamp(3rem, 7vw, 5.5rem);
+      font-weight: 900;
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      margin-bottom: 2rem;
+    }
+
+    .hero-title em {
+      font-style: italic;
+      color: var(--accent);
+    }
+
+    .hero-desc {
+      font-size: 1.15rem;
+      line-height: 1.8;
+      color: #aaa;
+      font-weight: 300;
+      max-width: 620px;
+      border-left: 2px solid var(--border);
+      padding-left: 1.5rem;
+    }
+
+    /* ── Divider ── */
+    .divider {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 0 3rem;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ── Cards ── */
+    .cards {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 4rem 3rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      animation: fadeIn 0.7s ease 0.15s both;
+    }
+
+    @media (max-width: 600px) {
+      .cards { grid-template-columns: 1fr; }
+      nav, .hero, .divider, .cards, .footer-bar { padding-left: 1.5rem; padding-right: 1.5rem; }
+      .hero { padding-top: 3rem; }
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 1.75rem;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+
+    .card:hover { border-color: var(--accent-dim); }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent), transparent);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .card:hover::before { opacity: 1; }
+
+    .card-icon {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--accent);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+    }
+
+    .card-title {
+      font-family: var(--font-serif);
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 0.6rem;
+      line-height: 1.2;
+    }
+
+    .card-body {
+      font-size: 0.88rem;
+      line-height: 1.7;
+      color: #888;
+      font-weight: 300;
+    }
+
+    /* ── Manifesto ── */
+    .manifesto {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 0 3rem 5rem;
+      animation: fadeIn 0.7s ease 0.25s both;
+    }
+
+    .manifesto-label {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--muted);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 2rem;
+    }
+
+    .manifesto-text {
+      font-family: var(--font-serif);
+      font-size: 1.5rem;
+      font-weight: 400;
+      font-style: italic;
+      line-height: 1.7;
+      color: var(--text);
+      border-left: 3px solid var(--accent);
+      padding-left: 2rem;
+      max-width: 680px;
+    }
+
+    .manifesto-text strong {
+      font-style: normal;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    /* ── Footer bar ── */
+    .footer-bar {
+      border-top: 1px solid var(--border);
+      padding: 1.5rem 3rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--muted);
+    }
+
+    .footer-bar a {
+      color: var(--url-color);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+
+    .footer-bar a:hover { color: var(--accent); }
+
+    /* ── Animation ── */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo">void</a>
+  <a href="index.html" class="nav-link">← back to search</a>
+</nav>
+
+<section class="hero">
+  <p class="hero-label">about void</p>
+  <h1 class="hero-title">search the web,<br><em>your way.</em></h1>
+  <p class="hero-desc">
+    VOID is a free, non-profit search engine built by the creator of ROK.
+    It runs locally on a personal machine — so don't expect the server to be
+    online 24/7, ykyk. We're actively scaling our index, and as soon as that
+    Amazon 500GB external hard drive arrives, it plans to be a genuinely
+    helpful search engine for everyone.
+  </p>
+</section>
+
+<div class="divider"></div>
+
+<div class="cards">
+  <div class="card">
+    <p class="card-icon">// origin</p>
+    <h2 class="card-title">Built by the creator of ROK</h2>
+    <p class="card-body">
+      VOID started as a side project — a search engine that actually respects
+      you. No ads, no tracking, no corporate nonsense. Just results.
+    </p>
+  </div>
+
+  <div class="card">
+    <p class="card-icon">// infrastructure</p>
+    <h2 class="card-title">Locally ran, honestly</h2>
+    <p class="card-body">
+      The server runs on a personal PC. That means sometimes it's offline.
+      We're not going to pretend otherwise — it's part of the charm.
+    </p>
+  </div>
+
+  <div class="card">
+    <p class="card-icon">// index</p>
+    <h2 class="card-title">Actively growing</h2>
+    <p class="card-body">
+      Our crawler is running. The index is expanding. Once that 500GB drive
+      lands, expect a serious jump in coverage across the open web.
+    </p>
+  </div>
+
+  <div class="card">
+    <p class="card-icon">// mission</p>
+    <h2 class="card-title">Non-profit, always</h2>
+    <p class="card-body">
+      VOID will never serve ads or sell your data. It exists because the web
+      deserves a search engine that isn't trying to monetize your attention.
+    </p>
+  </div>
+</div>
+
+<section class="manifesto">
+  <p class="manifesto-label">// what we believe</p>
+  <p class="manifesto-text">
+    The open web is worth indexing. <strong>Search should be free</strong> —
+    not just in price, but in spirit. No filters, no agendas, no ads.
+    Just the web, as it is.
+  </p>
+</section>
+
+<footer class="footer-bar">
+  <span>void search — non-profit, open web</span>
+  <a href="index.html">← return to search</a>
+</footer>
+
+</body>
+</html>
